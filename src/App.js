@@ -17,9 +17,10 @@ const contract = new ethers.Contract(contractAddress, contractABI, provider);
 
 function App() {
   const [currentPlayers, setCurrentPlayers] = useState([]);
+  const [winners, setWinners] = useState([]);
 
   useEffect(() => {
-    async function fetchContractInfo() {
+    async function fetchCurrentPlayersInfo() {
       // Get tolat number of players
       const playersCount = parseInt(ethers.utils.formatUnits(await contract.playersCount(), 0));
       const playerGetters = [];
@@ -30,11 +31,23 @@ function App() {
       // Fetch all player's addresses
       const playersAddresses = await Promise.all(playerGetters);
       setCurrentPlayers(playersAddresses);
-
-      // 2. Get the number of winners
-      // Iterate over all winners, and get their addresses
     }
-    fetchContractInfo();
+    fetchCurrentPlayersInfo();
+  }, []);
+
+  useEffect(() => {
+    async function fetchWinnersInfo() {
+      // Get tolat number of players
+      const winnersCount = parseInt(ethers.utils.formatUnits(await contract.winnersCount(), 0));
+      const winnerGetters = [];
+      for (let i = 0; i < winnersCount; i++) {
+        winnerGetters.push(contract.players(i));
+      }
+
+      const winnerAddresses = await Promise.all(winnerGetters);
+      setWinners(winnerAddresses);
+    }
+    fetchWinnersInfo();
   }, []);
 
   return (
@@ -44,15 +57,32 @@ function App() {
         <a
           className="App-link"
           href="https://rinkeby.etherscan.io/address/0x6937A928e974465A7f234772A647e9bebcE635aA"
-          rel="noopener noreferrer"
         >
           Lottery
         </a>
         Current Players:
-        <ul>
+        <ol>
           {currentPlayers.map((address, index) => {
-            return <li key={index}>{address}</li>;
+            return (
+              <li key={index}>
+                <a href={'https://rinkeby.etherscan.io/address/' + address}>{address}</a>
+              </li>
+            );
           })}
+        </ol>
+        Past winners:
+        <ul>
+          {winners.length ? (
+            winners.map((address, index) => {
+              return (
+                <li key={index}>
+                  <a href={'https://rinkeby.etherscan.io/address/' + address}>{address}</a>
+                </li>
+              );
+            })
+          ) : (
+            <li>No winners yet</li>
+          )}
         </ul>
       </main>
     </div>
